@@ -14,11 +14,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the target repo
+      # Step 1: Ensure using Node.js 20 (optional, as this will be the default)
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      # Step 2: Checkout the target repo
       - name: Checkout target repo
         uses: actions/checkout@v3
 
-      # Step 2: Sync upstream changes
+      # Step 3: Sync upstream changes
       - name: Sync upstream changes
         id: sync
         uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
@@ -29,7 +35,7 @@ jobs:
           target_repo_token: ${{ secrets.GITHUB_TOKEN }}
           test_mode: false
 
-      # Step 3: Retry sync if first attempt fails
+      # Step 4: Retry sync if first attempt fails
       - name: Retry Sync (if needed)
         if: ${{ failure() }}
         uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
@@ -40,7 +46,7 @@ jobs:
           target_repo_token: ${{ secrets.GITHUB_TOKEN }}
           test_mode: false
 
-      # Step 4: Check for final failure and exit with error
+      # Step 5: Check for final failure and exit with error
       - name: Final check
         if: ${{ failure() }}
         run: |
