@@ -1,0 +1,48 @@
+name: Upstream Sync
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # every day
+  workflow_dispatch:
+
+jobs:
+  sync_latest_from_upstream:
+    name: Sync latest commits from upstream repo
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the target repo
+      - name: Checkout target repo
+        uses: actions/checkout@v3
+
+      # Step 2: Sync upstream changes
+      - name: Sync upstream changes
+        id: sync
+        uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
+        with:
+          upstream_sync_repo: cmliu/edgetunnel
+          upstream_sync_branch: main
+          target_sync_branch: main
+          target_repo_token: ${{ secrets.GITHUB_TOKEN }}
+          test_mode: false
+
+      # Step 3: Retry sync if first attempt fails
+      - name: Retry Sync (if needed)
+        if: ${{ failure() }}
+        uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
+        with:
+          upstream_sync_repo: cmliu/edgetunnel
+          upstream_sync_branch: main
+          target_sync_branch: main
+          target_repo_token: ${{ secrets.GITHUB_TOKEN }}
+          test_mode: false
+
+      # Step 4: Check for final failure and exit with error
+      - name: Final check
+        if: ${{ failure() }}
+        run: |
+          echo "[Error] Sync failed after retry. Please manually sync your fork."
+          exit 1
